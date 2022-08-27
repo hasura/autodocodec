@@ -18,6 +18,7 @@ import Data.Scientific
 import Data.Text (Text)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
+import Data.Void
 
 -- | Implement 'JSON.toJSON' via a type's codec.
 toJSONViaCodec :: HasCodec a => a -> JSON.Value
@@ -31,6 +32,7 @@ toJSONVia = flip go
     -- gathered to case-matching on GADTs, they aren't strictly necessary.
     go :: a -> ValueCodec a void -> JSON.Value
     go a = \case
+      VoidCodec -> absurd a
       NullCodec -> JSON.Null
       BoolCodec _ -> toJSON (a :: Bool)
       StringCodec _ -> toJSON (a :: Text)
@@ -80,6 +82,7 @@ toEncodingVia = flip go
   where
     go :: a -> ValueCodec a void -> JSON.Encoding
     go a = \case
+      VoidCodec -> absurd a
       NullCodec -> JSON.null_
       BoolCodec _ -> JSON.bool (a :: Bool)
       StringCodec _ -> JSON.text (a :: Text)

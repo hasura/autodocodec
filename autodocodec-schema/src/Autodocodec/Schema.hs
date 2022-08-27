@@ -40,6 +40,7 @@ import GHC.Generics (Generic)
 -- NOTE: This schema roundtrips to JSON, but it cannot expres everything that a fully-featured json-schema may be able to express.
 data JSONSchema
   = AnySchema
+  | VoidSchema
   | NullSchema
   | BoolSchema
   | StringSchema
@@ -75,6 +76,7 @@ instance ToJSON JSONSchema where
       go :: JSONSchema -> [JSON.Pair]
       go = \case
         AnySchema -> []
+        VoidSchema -> ["type" JSON..= ("void" :: Text)]
         NullSchema -> ["type" JSON..= ("null" :: Text)]
         BoolSchema -> ["type" JSON..= ("boolean" :: Text)]
         StringSchema -> ["type" JSON..= ("string" :: Text)]
@@ -119,6 +121,7 @@ instance FromJSON JSONSchema where
     mdefs <- o JSON..:? "$defs"
     let defsFunc = maybe id WithDefSchema mdefs
     fmap (commentFunc . defsFunc) $ case mt :: Maybe Text of
+      Just "void" -> pure VoidSchema
       Just "null" -> pure NullSchema
       Just "boolean" -> pure BoolSchema
       Just "string" -> pure StringSchema
@@ -266,6 +269,7 @@ validateAccordingTo val schema = (`evalState` M.empty) $ go val schema
     go :: JSON.Value -> JSONSchema -> State (Map Text JSONSchema) Bool
     go value = \case
       AnySchema -> pure True
+      VoidSchema -> pure False
       NullSchema -> pure $ value == JSON.Null
       BoolSchema -> pure $ case value of
         JSON.Bool _ -> True
@@ -315,6 +319,7 @@ jsonSchemaVia = (`evalState` S.empty) . go
   where
     go :: ValueCodec input output -> State (Set Text) JSONSchema
     go = \case
+      VoidCodec -> pure VoidSchema
       NullCodec -> pure NullSchema
       BoolCodec mname -> pure $ maybe id CommentSchema mname BoolSchema
       StringCodec mname -> pure $ maybe id CommentSchema mname StringSchema

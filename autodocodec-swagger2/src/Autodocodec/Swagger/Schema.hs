@@ -31,6 +31,16 @@ declareNamedSchemaVia c' Proxy = go c'
   where
     go :: ValueCodec input output -> Declare (Definitions Schema) NamedSchema
     go = \case
+      VoidCodec ->
+        -- Not really correct, but not sure we can do much better in Swagger
+        pure $
+          NamedSchema Nothing $
+            mempty
+              { _schemaParamSchema =
+                  mempty
+                    { _paramSchemaType = Just SwaggerNull
+                    }
+              }
       NullCodec ->
         pure $
           NamedSchema Nothing $

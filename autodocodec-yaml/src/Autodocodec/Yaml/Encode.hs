@@ -17,6 +17,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Vector (Vector)
 import qualified Data.Vector as V
+import Data.Void
 import qualified Data.Yaml as JSON
 import Data.Yaml.Builder as Yaml
 
@@ -32,6 +33,7 @@ toYamlVia = flip go
     -- gathered to case-matching on GADTs, they aren't strictly necessary.
     go :: a -> ValueCodec a void -> YamlBuilder
     go a = \case
+      VoidCodec -> absurd a
       NullCodec -> Yaml.null
       BoolCodec _ -> Yaml.bool (a :: Bool)
       StringCodec _ -> Yaml.string (a :: Text)

@@ -68,6 +68,7 @@ import GHC.Generics (Generic)
 -- * The @output@ parameter is used for the type that is used during decoding of a value, so it's the @output@ of the codec.
 -- * Both parameters are unused during documentation.
 data Codec context input output where
+  VoidCodec :: ValueCodec Void Void
   -- | Encode '()' to the @null@ value, and decode @null@ as '()'.
   NullCodec ::
     ValueCodec () ()
@@ -325,6 +326,7 @@ showCodecABit = ($ "") . (`evalState` S.empty) . go 0
   where
     go :: Int -> Codec context input output -> State (Set Text) ShowS
     go d = \case
+      VoidCodec -> pure $ showString "VoidCodec"
       NullCodec -> pure $ showString "NullCodec"
       BoolCodec mName -> pure $ showParen (d > 10) $ showString "BoolCodec " . showsPrec 11 mName
       StringCodec mName -> pure $ showParen (d > 10) $ showString "StringCodec " . showsPrec 11 mName
